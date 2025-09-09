@@ -1,11 +1,93 @@
 import { Router } from "express";
-
+import { authenticate, AuthenticatedRequest } from "../middleware/authenticate";
+import multer from "multer";
+import path from "path";
+import fs from "fs";
+import { extractTextFromFile } from "../lib/extractText";
+import { db, getVectorStore } from "../lib/db";
+import { chunkText } from "../lib/chunkText";
+import { Chroma } from "@langchain/community/vectorstores/chroma";
+import { embeddings } from "../embeddings/google";
+import { Document } from "@langchain/core/documents";
 const router = Router();
+const upload = multer({ dest: "uploads/" });
 
-router.get("/", (req, res) => {
-  const p = process.env.JWT_SECRET!;
+router.post(
+  "/",
+  authenticate,
+  upload.single("file"),
+  async (req: AuthenticatedRequest, res) => {
+    const userId = req.user.userId;
 
-  res.json({ msg: "hello from upload chat route", p });
-});
+    const file = req.file;
+    const p = process.env.JWT_SECRET!;
+
+    if (!file) {
+      return res.json({ message: "No file uploaded" });
+    }
+    const ext = path.extname(file.originalname).toLowerCase();
+
+    if (![".pdf", ".txt", ".md"].includes(ext)) {
+      fs.unlinkSync(file.path);
+      return res.status(400).json({ error: "Unsupported file type" });
+    }
+
+    try {
+      //extract the raw text from file
+      const text = await extractTextFromFile(file.path, ext);
+
+      //saving the metadata to postgres
+
+      const doc = await db.document.create({
+        data: {
+          title: file.originalname,
+          name: file.filename,
+          userId,
+        },
+      });
+
+      const chunks = await chunkText(text);
+      const docs = chunks.map((chunk, i) => {
+        return new Document({
+          pageContent: chunk.pageContent,
+          metadata: {
+            userId,
+            documentId: doc.id,
+            chunkIndex: i,
+          },
+        });
+      });
+
+      const vectorStore = await Chroma.fromDocuments(docs, embeddings, {
+        collectionName: process.env.CHROMA_COLLECTION_NAME,
+        url: process.env.CHROMA_VECTORDB_URL, // ensure chromadb is running
+      });
+
+      fs.unlinkSync(file.path); // cleanup
+      const store = await getVectorStore();
+      const query = "What are the inner planets?";
+      const results = await store.similaritySearch(query, 3, {
+        userId: userId,
+      });
+
+      res.json({
+        query,
+        results: results.map((r) => ({
+          text: r.pageContent,
+          metadata: r.metadata,
+        })),
+      });
+
+      res.json({
+        message: "File uploaded and chunked",
+        chunksCount: chunks.length,
+      });
+    } catch (e) {
+      console.log("[API/UPLOAD/CATCH]", e);
+      if (file?.path) fs.unlinkSync(file.path);
+      return res.status(500).json({ error: "Failed to process file" });
+    }
+  },
+);
 
 export default router;

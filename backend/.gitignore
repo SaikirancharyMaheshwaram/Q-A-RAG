@@ -1,4 +1,43 @@
-.env
-/node_modules
+
 
 /src/generated/prisma
+
+
+# Node modules folder (pnpm uses node_modules too)
+node_modules/
+
+# Environment variables (keep secrets out of Git)
+.env
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# OS generated files
+.DS_Store
+Thumbs.db
+
+# Uploaded files (if storing uploads locally)
+uploads/
+
+# Build output folders
+dist/
+build/
+
+# IDE and editor folders/files
+.vscode/
+.idea/
+*.sublime-project
+*.sublime-workspace
+
+# Optional: coverage reports
+coverage/
+
+# Optional: npm cache folder (usually outside project, but safe to ignore)
+.npm/
+
+# Optional: pnpm store folder (usually outside project)
+.pnpm-store/

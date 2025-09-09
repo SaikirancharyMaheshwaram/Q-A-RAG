@@ -47,7 +47,7 @@ router.post("/google", async (req, res) => {
       { userId: newUser.id, email: newUser.email },
       JWT_SECRET!,
       {
-        expiresIn: "1h",
+        expiresIn: "1d",
       },
     );
 

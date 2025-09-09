@@ -18,7 +18,7 @@ app.use(
 );
 app.use(cookieParser());
 app.use("/api/chat", chatRouter);
-app.use("/upload", uploadRouter);
+app.use("/api/upload", uploadRouter);
 app.use("/api/auth", authRouter);
 
 export default app;
