@@ -1,13 +1,10 @@
 import { Router } from "express";
+import { authenticate, AuthenticatedRequest } from "../middleware/authenticate";
 
 const router = Router();
 
+router.get("/", authenticate, (req: AuthenticatedRequest, res) => {
+  res.json({ user: req.user, msg: "hello from protected route" });
+});
 
-router.get("/",(req,res)=>{
-  
-  res.send("hello from chat route")
-  
-  })
-
-
-export default router
+export default router;
