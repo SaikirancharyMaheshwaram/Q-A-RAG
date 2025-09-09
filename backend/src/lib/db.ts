@@ -1,4 +1,4 @@
-import { embeddings } from "../embeddings/google";
+import { embeddings } from "../llms/google";
 import { PrismaClient } from "../generated/prisma";
 import { Chroma } from "@langchain/community/vectorstores/chroma";
 

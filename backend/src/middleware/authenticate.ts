@@ -13,7 +13,6 @@ export function authenticate(
   next: NextFunction,
 ) {
   const token = req.cookies.token;
-  console.log({ token });
 
   if (!token) {
     return res.status(401).json({ error: "Unauthorized: No token provided" });

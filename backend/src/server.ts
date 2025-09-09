@@ -3,6 +3,7 @@ import dotenv from "dotenv";
 dotenv.config();
 
 import chatRouter from "./routes/chat";
+import chatsRouter from "./routes/chats";
 import uploadRouter from "./routes/upload";
 import authRouter from "./routes/auth";
 import cookieParser from "cookie-parser";
@@ -18,6 +19,7 @@ app.use(
 );
 app.use(cookieParser());
 app.use("/api/chat", chatRouter);
+app.use("/api/chats", chatsRouter);
 app.use("/api/upload", uploadRouter);
 app.use("/api/auth", authRouter);
 

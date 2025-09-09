@@ -7,7 +7,7 @@ import { extractTextFromFile } from "../lib/extractText";
 import { db, getVectorStore } from "../lib/db";
 import { chunkText } from "../lib/chunkText";
 import { Chroma } from "@langchain/community/vectorstores/chroma";
-import { embeddings } from "../embeddings/google";
+import { embeddings } from "../llms/google";
 import { Document } from "@langchain/core/documents";
 const router = Router();
 const upload = multer({ dest: "uploads/" });
@@ -64,19 +64,6 @@ router.post(
       });
 
       fs.unlinkSync(file.path); // cleanup
-      const store = await getVectorStore();
-      const query = "What are the inner planets?";
-      const results = await store.similaritySearch(query, 3, {
-        userId: userId,
-      });
-
-      res.json({
-        query,
-        results: results.map((r) => ({
-          text: r.pageContent,
-          metadata: r.metadata,
-        })),
-      });
 
       res.json({
         message: "File uploaded and chunked",
