@@ -2,6 +2,7 @@ import { Router } from "express";
 import { OAuth2Client } from "google-auth-library";
 import jwt from "jsonwebtoken";
 import { db } from "../lib/db";
+import { authenticate, AuthenticatedRequest } from "../middleware/authenticate";
 
 const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID;
 const JWT_SECRET = process.env.JWT_SECRET;
@@ -62,5 +63,8 @@ router.post("/google", async (req, res) => {
     console.error(e);
     res.status(401).json({ error: "Invalid Google token" });
   }
+});
+router.get("/me", authenticate, async (req: AuthenticatedRequest, res) => {
+  res.json({ user: req.user, message: "success" });
 });
 export default router;
