@@ -7,36 +7,43 @@ import { makeLLM } from "../llms/google";
 const router = Router();
 
 router.post("/", authenticate, async (req: AuthenticatedRequest, res) => {
-  const { query } = req.body;
-  const { userId } = req.user;
-
-  const vectorStore = await getVectorStore();
-  const results = await vectorStore.similaritySearch(query, 3, { userId });
-  console.log({ results });
-  if (results.length == 0) {
-    return res.json({ message: "No relevant Info found" });
-  }
-
-  const promptforllm = buildPrompt(results, query);
-
   try {
+    const { query } = req.body;
+    const { userId } = req.user;
+
+    if (!query?.trim()) {
+      return res.status(400).json({ error: "Query is required" });
+    }
+
+    const vectorStore = await getVectorStore();
+    const results = await vectorStore.similaritySearch(query, 3, { userId });
+
+    if (results.length === 0) {
+      return res.status(404).json({ message: "No relevant info found" });
+    }
+
+    const promptforllm = buildPrompt(results, query);
     const llm = makeLLM();
     const aiMsg = await llm.invoke(promptforllm);
 
-    // saving the chat
-    const chat = await db.chat.create({
+    const content =
+      typeof aiMsg.content === "string"
+        ? aiMsg.content
+        : JSON.stringify(aiMsg.content);
+
+    await db.chat.create({
       data: {
         question: query,
-        answer: JSON.stringify(aiMsg.content),
+        answer: content,
         userId,
-        docId: results[0]?.metadata.documentId,
+        docId: results[0]?.metadata.documentId, // MVP only
       },
     });
 
-    res.json({ query, response: aiMsg.content });
+    return res.status(200).json({ query, response: content });
   } catch (e) {
-    console.log("[CHAT_ROUTE_CATCH]", e);
-    res.json({ error: "Something went wrong" });
+    console.error("[CHAT_ROUTE_CATCH]", e);
+    return res.status(500).json({ error: "Internal server error" });
   }
 });
 

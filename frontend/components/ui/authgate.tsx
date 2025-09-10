@@ -4,9 +4,15 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import axios from "axios";
-import { BACKEND_URL } from "@/lib/utils";
+import { BACKEND_URL, cn } from "@/lib/utils";
 
-export function AuthGate({ children }: { children: React.ReactNode }) {
+export function AuthGate({
+  children,
+  className,
+}: {
+  children: React.ReactNode;
+  className: String;
+}) {
   const [loading, setLoading] = useState(true);
   const [authorized, setAuthorized] = useState(false);
   const router = useRouter();
@@ -36,5 +42,5 @@ export function AuthGate({ children }: { children: React.ReactNode }) {
 
   if (!authorized) return null;
 
-  return <>{children}</>;
+  return <div className={cn(className, "")}>{children}</div>;
 }

@@ -23,5 +23,25 @@ router.get("/", authenticate, async (req: AuthenticatedRequest, res) => {
     res.json({ error: "Something went wrong" });
   }
 });
+router.get("/:id", authenticate, async (req: AuthenticatedRequest, res) => {
+  const userId = req.user.userId;
+  const { id } = req.params;
 
+  try {
+    const allChats = await db.chat.findMany({
+      where: {
+        userId,
+        docId: id,
+      },
+      orderBy: {
+        createdAt: "asc",
+      },
+    });
+
+    res.json(allChats);
+  } catch (e) {
+    console.log("[ALLCHAT_ROUTE]", e);
+    res.json({ error: "Something went wrong" });
+  }
+});
 export default router;

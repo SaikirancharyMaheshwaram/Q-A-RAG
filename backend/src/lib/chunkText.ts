@@ -19,7 +19,8 @@ export function buildPrompt(
 
   return `
 You are an AI assistant. Use the following context to answer the question.
-
+and also Please format your response using markdown when helpful
+(headings, lists, code blocks).
 Context:
 ${context}
 

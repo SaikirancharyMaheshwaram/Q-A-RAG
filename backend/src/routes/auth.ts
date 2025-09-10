@@ -45,7 +45,12 @@ router.post("/google", async (req, res) => {
     });
 
     const token = jwt.sign(
-      { userId: newUser.id, email: newUser.email },
+      {
+        userId: newUser.id,
+        email: newUser.email,
+        name: newUser.name,
+        picture: newUser.picture,
+      },
       JWT_SECRET!,
       {
         expiresIn: "1d",
@@ -67,4 +72,15 @@ router.post("/google", async (req, res) => {
 router.get("/me", authenticate, async (req: AuthenticatedRequest, res) => {
   res.json({ user: req.user, message: "success" });
 });
+
+router.post("/logout", (req, res) => {
+  res.clearCookie("token", {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+    sameSite: "lax", // must match your login cookie config
+  });
+
+  return res.json({ success: true, message: "Logged out" });
+});
+
 export default router;
