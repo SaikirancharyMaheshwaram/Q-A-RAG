@@ -34,7 +34,7 @@ export default function Login() {
 
       toast("Login Successfull");
       setTimeout(() => {
-        router.push("/chat");
+        router.push("/dashboard");
       }, 3000);
     } catch (error) {
       toast("Login failed");
@@ -42,7 +42,6 @@ export default function Login() {
   };
   return (
     <div className="flex items-center justify-center min-h-screen bg-gradient-to-r from-[#b67237] via-[#d89050] to-[#b67237] p-4 w-screen overflow-hidden relative">
-      
       {/* Background Blobs */}
       <div className="absolute top-20 -left-20 w-72 h-72 bg-white/20 rounded-full blur-3xl" />
       <div className="absolute bottom-20 -right-20 w-72 h-72 bg-[#ffcf9c]/40 rounded-full blur-3xl" />

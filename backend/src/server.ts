@@ -12,9 +12,29 @@ import cors from "cors";
 
 const app = express();
 app.use(express.json());
+// app.use(
+//   cors({
+//     origin: ["http://localhost:3000", "https://009dceac1c3e.ngrok-free.app"],
+//     // your frontend
+//     credentials: true,
+//   }),
+// );
+//
+const allowedOrigins = [
+  "http://localhost:3000",
+  "https://009dceac1c3e.ngrok-free.app",
+];
+
 app.use(
   cors({
-    origin: "http://localhost:3000", // your frontend
+    origin: function (origin, callback) {
+      // Check if the request origin is in our allowed list
+      if (!origin || allowedOrigins.indexOf(origin) !== -1) {
+        callback(null, true);
+      } else {
+        callback(new Error("Not allowed by CORS"));
+      }
+    },
     credentials: true,
   }),
 );

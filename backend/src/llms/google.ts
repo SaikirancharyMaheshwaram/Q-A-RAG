@@ -11,4 +11,5 @@ export const makeLLM = () =>
     model: "gemini-2.0-flash",
     temperature: 0.4,
     apiKey: process.env.GEMINI_API_KEY!,
+    streaming: true,
   });
