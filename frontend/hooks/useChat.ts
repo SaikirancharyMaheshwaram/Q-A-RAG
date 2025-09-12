@@ -41,7 +41,7 @@ export function useChat() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
-        body: JSON.stringify({ query, docId }),
+        body: JSON.stringify({ query, docId, chatId: "sample-id" }),
       });
 
       if (!response.body) throw new Error("No response body");

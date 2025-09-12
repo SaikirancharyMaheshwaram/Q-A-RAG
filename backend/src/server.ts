@@ -9,6 +9,7 @@ import authRouter from "./routes/auth";
 import docsRouter from "./routes/documents";
 import cookieParser from "cookie-parser";
 import cors from "cors";
+import { connectRedis } from "./lib/db";
 
 const app = express();
 app.use(express.json());
@@ -38,6 +39,9 @@ app.use(
     credentials: true,
   }),
 );
+
+connectRedis();
+
 app.use(cookieParser());
 app.use("/api/chat", chatRouter);
 app.use("/api/chats", chatsRouter);

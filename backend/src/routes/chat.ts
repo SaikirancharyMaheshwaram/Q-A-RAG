@@ -1,19 +1,35 @@
 import { Router } from "express";
 import { authenticate, AuthenticatedRequest } from "../middleware/authenticate";
-import { db, getVectorStore } from "../lib/db";
+import {
+  db,
+  getVectorStore,
+  RedisChatMessageHistory,
+  redisClient,
+} from "../lib/db";
 import { buildPrompt } from "../lib/chunkText";
 import { makeLLM } from "../llms/google";
+import { AIMessage, HumanMessage } from "@langchain/core/messages";
 
 const router = Router();
 
 router.post("/", authenticate, async (req: AuthenticatedRequest, res) => {
   try {
-    const { query } = req.body;
+    const { query, chatId } = req.body;
     const { userId } = req.user;
 
     if (!query?.trim()) {
       return res.status(400).json({ error: "Query is required" });
     }
+    const sessionId = `${userId}:${chatId}`;
+
+    const chatHistory = new RedisChatMessageHistory({
+      sessionId: sessionId,
+      client: redisClient,
+
+      sessionTTL: 60 * 60 * 24, //  24 hours
+    });
+
+    const historyMessages = await chatHistory.getMessages();
 
     const vectorStore = await getVectorStore();
     const results = await vectorStore.similaritySearch(query, 3, { userId });
@@ -22,7 +38,7 @@ router.post("/", authenticate, async (req: AuthenticatedRequest, res) => {
       return res.status(404).json({ message: "No relevant info found" });
     }
 
-    const promptforllm = buildPrompt(results, query);
+    const promptforllm = buildPrompt(historyMessages, results, query);
     const llm = makeLLM();
     // const aiMsg = await llm.invoke(promptforllm);
 
@@ -40,6 +56,12 @@ router.post("/", authenticate, async (req: AuthenticatedRequest, res) => {
       // send partial token to frontend
       res.write(`data: ${JSON.stringify({ token: message + "" })}\n\n`);
     }
+    
+    //store it in redis
+    await chatHistory.addMessages([
+         new HumanMessage(query),
+         new AIMessage(finalContent),
+       ]);
 
     await db.chat.create({
       data: {
@@ -56,5 +78,16 @@ router.post("/", authenticate, async (req: AuthenticatedRequest, res) => {
     return res.status(500).json({ error: "Internal server error" });
   }
 });
+
+// router.get("/redis", async (req, res) => {
+//   try {
+//     const value = await redisClient.set(
+//       "luffy",
+//       "I am going to be king of the pirates",
+//     );
+//     const response = await redisClient.get("luffy");
+//     res.json({ value: response });
+//   } catch (e) {}
+// });
 
 export default router;
