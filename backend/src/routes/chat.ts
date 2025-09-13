@@ -9,6 +9,7 @@ import {
 import { buildPrompt } from "../lib/chunkText";
 import { makeLLM } from "../llms/google";
 import { AIMessage, HumanMessage } from "@langchain/core/messages";
+import { BufferWindowMemory } from "langchain/memory";
 
 const router = Router();
 
@@ -25,11 +26,19 @@ router.post("/", authenticate, async (req: AuthenticatedRequest, res) => {
     const chatHistory = new RedisChatMessageHistory({
       sessionId: sessionId,
       client: redisClient,
-
-      sessionTTL: 60 * 60 * 24, //  24 hours
+      sessionTTL: 60 * 60 * 6, //  24 hours
     });
 
-    const historyMessages = await chatHistory.getMessages();
+    const memory = new BufferWindowMemory({
+      chatHistory: chatHistory,
+      returnMessages: true,
+      memoryKey: "chat_history",
+      k: 5,
+    });
+
+    const historyMessages = await memory.loadMemoryVariables({});
+
+    // const historyMessagess = await chatHistory.getMessages();
 
     const vectorStore = await getVectorStore();
     const results = await vectorStore.similaritySearch(query, 3, { userId });
@@ -38,7 +47,12 @@ router.post("/", authenticate, async (req: AuthenticatedRequest, res) => {
       return res.status(404).json({ message: "No relevant info found" });
     }
 
-    const promptforllm = buildPrompt(historyMessages, results, query);
+    const promptforllm = buildPrompt(
+      historyMessages.chat_history,
+      results,
+      query,
+    );
+    console.log({ promptforllm, userId });
     const llm = makeLLM();
     // const aiMsg = await llm.invoke(promptforllm);
 
@@ -56,12 +70,15 @@ router.post("/", authenticate, async (req: AuthenticatedRequest, res) => {
       // send partial token to frontend
       res.write(`data: ${JSON.stringify({ token: message + "" })}\n\n`);
     }
-    
+
     //store it in redis
-    await chatHistory.addMessages([
-         new HumanMessage(query),
-         new AIMessage(finalContent),
-       ]);
+    // await chatHistory.addMessages([
+    //   new HumanMessage(query),
+    //   new AIMessage(finalContent),
+    // ]);
+
+    // storing it in redis using langchain memory
+    await memory.saveContext({ human: query }, { ai: finalContent });
 
     await db.chat.create({
       data: {
@@ -71,6 +88,7 @@ router.post("/", authenticate, async (req: AuthenticatedRequest, res) => {
         docId: results[0]?.metadata.documentId, // MVP only
       },
     });
+    console.log({ finalContent });
     res.write(`data: ${JSON.stringify({ done: true })}\n\n`);
     res.end();
   } catch (e) {
@@ -79,15 +97,15 @@ router.post("/", authenticate, async (req: AuthenticatedRequest, res) => {
   }
 });
 
-// router.get("/redis", async (req, res) => {
-//   try {
-//     const value = await redisClient.set(
-//       "luffy",
-//       "I am going to be king of the pirates",
-//     );
-//     const response = await redisClient.get("luffy");
-//     res.json({ value: response });
-//   } catch (e) {}
-// });
+router.get("/redis", async (req, res) => {
+  try {
+    const value = await redisClient.set(
+      "luffy",
+      "I am going to be king of the pirates",
+    );
+    const response = await redisClient.get("luffy");
+    res.json({ value: response });
+  } catch (e) {}
+});
 
 export default router;

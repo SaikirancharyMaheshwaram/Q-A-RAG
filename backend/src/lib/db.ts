@@ -2,7 +2,7 @@ import { embeddings } from "../llms/google";
 import { PrismaClient } from "../generated/prisma";
 import { Chroma } from "@langchain/community/vectorstores/chroma";
 import { createClient } from "redis";
-import { RedisChatMessageHistory } from "@langchain/community/stores/message/redis";
+import { RedisChatMessageHistory } from "@langchain/redis";
 
 export const db = new PrismaClient();
 

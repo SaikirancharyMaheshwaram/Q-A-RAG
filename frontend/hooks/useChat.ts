@@ -1,8 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import api from "@/lib/axios";
 import { BACKEND_URL } from "@/lib/utils";
+import { useParams } from "next/navigation";
 
 export function useChat() {
   const [messages, setMessages] = useState<
@@ -10,6 +11,20 @@ export function useChat() {
   >([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [chatId, setChatId] = useState<string | null>(null);
+  const { docId } = useParams<{ docId: string }>();
+  const generateUUID = () => crypto.randomUUID();
+  useEffect(() => {
+    const storedChatId = localStorage.getItem(docId);
+    if (!storedChatId) {
+      const newChatId = generateUUID();
+      setChatId(newChatId);
+
+      localStorage.setItem(docId, newChatId);
+    } else {
+      setChatId(storedChatId);
+    }
+  }, [docId]);
 
   async function loadHistory(docId: string) {
     try {
@@ -41,7 +56,7 @@ export function useChat() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
-        body: JSON.stringify({ query, docId, chatId: "sample-id" }),
+        body: JSON.stringify({ query, docId, chatId }),
       });
 
       if (!response.body) throw new Error("No response body");

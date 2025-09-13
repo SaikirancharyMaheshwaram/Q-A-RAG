@@ -9,9 +9,15 @@ import { useChat } from "@/hooks/useChat";
 export default function ChatPage() {
   const { docId } = useParams<{ docId: string }>();
   const { messages, loading, error, sendMessage, loadHistory } = useChat();
-
+  const generateUUID = () => crypto.randomUUID();
   useEffect(() => {
     if (docId) loadHistory(docId);
+    const storedChatId = localStorage.getItem(docId);
+    if (!storedChatId) {
+      const newChatId = generateUUID();
+
+      localStorage.setItem(docId, newChatId);
+    }
   }, [docId]);
 
   return (
