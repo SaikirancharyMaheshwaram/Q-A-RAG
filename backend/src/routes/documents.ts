@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { authenticate, AuthenticatedRequest } from "../middleware/authenticate";
-import { db, getVectorStore } from "../lib/db";
+import { db, pinecone, pineconeIndex } from "../lib/db";
 
 const router = Router();
 
@@ -35,8 +35,9 @@ router.delete("/:id", authenticate, async (req: AuthenticatedRequest, res) => {
         userId,
       },
     });
-    const vectorStore = await getVectorStore();
-    await vectorStore.delete({
+    const vectorStore = pineconeIndex;
+
+    await vectorStore.deleteMany({
       filter: {
         documentId: id,
       },

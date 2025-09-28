@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { authenticate, AuthenticatedRequest } from "../middleware/authenticate";
-import { db, getVectorStore } from "../lib/db";
+import { db  } from "../lib/db";
 
 const router = Router();
 

@@ -33,9 +33,7 @@ export default function Login() {
       if (!res.data.success) throw new Error("Login failed");
 
       toast("Login Successfull");
-      setTimeout(() => {
-        router.push("/dashboard");
-      }, 3000);
+      router.push("/dashboard");
     } catch (error) {
       toast("Login failed");
     }

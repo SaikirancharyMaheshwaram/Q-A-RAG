@@ -4,11 +4,12 @@ import multer from "multer";
 import path from "path";
 import fs from "fs";
 import { extractTextFromFile } from "../lib/extractText";
-import { db, getVectorStore } from "../lib/db";
+import { db, pineconeIndex } from "../lib/db";
 import { chunkText } from "../lib/chunkText";
-import { Chroma } from "@langchain/community/vectorstores/chroma";
 import { embeddings } from "../llms/google";
 import { Document } from "@langchain/core/documents";
+import { PineconeStore } from "@langchain/pinecone";
+
 const router = Router();
 const upload = multer({ dest: "uploads/" });
 
@@ -58,10 +59,16 @@ router.post(
         });
       });
 
-      const vectorStore = await Chroma.fromDocuments(docs, embeddings, {
-        collectionName: process.env.CHROMA_COLLECTION_NAME,
-        url: process.env.CHROMA_VECTORDB_URL, // ensure chromadb is running
+      // const vectorStore = await Chroma.fromDocuments(docs, embeddings, {
+      //   collectionName: process.env.CHROMA_COLLECTION_NAME,
+      //   url: process.env.CHROMA_VECTORDB_URL, // ensure chromadb is running
+      // });
+
+      await PineconeStore.fromDocuments(docs, embeddings, {
+        pineconeIndex,
+        maxConcurrency: 5,
       });
+      console.log("uploaded successfully");
 
       fs.unlinkSync(file.path); // cleanup
 

@@ -6,6 +6,7 @@ import { getRelevantDocs } from "../services/retriever";
 import { streamLLMResponse } from "../services/streamer";
 import { db } from "../lib/db";
 
+
 const router = Router();
 
 router.post("/", authenticate, async (req: AuthenticatedRequest, res) => {
@@ -25,16 +26,16 @@ router.post("/", authenticate, async (req: AuthenticatedRequest, res) => {
 
     // 2. Retrieve relevant documents
     const results = await getRelevantDocs(userId, query);
-    if (results.length === 0) {
-      return res.status(404).json({ message: "No relevant info found" });
-    }
+    const context = results.matches
+      .map((match) => match.metadata?.text)
+      .join("\n\n---\n\n");
 
     // buiding prompt for llm
 
     const promptforllm = buildPrompt(
       historyMessages.chat_history,
       summaryText ?? "",
-      results,
+      context,
       query,
     );
 
@@ -48,7 +49,7 @@ router.post("/", authenticate, async (req: AuthenticatedRequest, res) => {
         question: query,
         answer: finalContent,
         userId,
-        docId: results[0]?.metadata.documentId, // MVP
+        docId: results.matches[0]?.metadata?.documentId + "", // MVP
       },
     });
   } catch (e) {

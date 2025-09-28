@@ -2,10 +2,11 @@ import { HumanMessage, AIMessage } from "@langchain/core/messages";
 export function buildPrompt(
   history: (HumanMessage | AIMessage)[],
   summary: string | null,
-  chunks: { pageContent: string }[],
+  // chunks: { pageContent: string }[],
+  context: string,
   question: string,
 ): string {
-  const context = chunks.map((chunk) => chunk.pageContent).join("\n\n");
+  // const context = chunks.map((chunk) => chunk.pageContent).join("\n\n");
 
   const formattedHistory = history
     .map((msg) => `${msg._getType()}: ${msg.content}`)

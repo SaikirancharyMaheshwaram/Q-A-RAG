@@ -5,7 +5,6 @@ export const embeddings = new GoogleGenerativeAIEmbeddings({
   apiKey: process.env.GEMINI_API_KEY!,
   model: "text-embedding-004",
 });
-
 export const makeLLM = () =>
   new ChatGoogleGenerativeAI({
     model: "gemini-2.0-flash",
